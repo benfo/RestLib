@@ -271,7 +271,7 @@ namespace RestLib
 
             if (string.IsNullOrEmpty(request.Headers.UserAgent.ToString()))
             {
-                request.Headers.Add("User-Agent", "restone");
+                request.Headers.Add("User-Agent", "RestLib");
             }
 
             switch (method)
