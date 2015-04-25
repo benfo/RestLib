@@ -8,7 +8,26 @@ using System.Xml.Serialization;
 
 namespace RestLib
 {
-    public class RestClient
+    public interface IRestClient
+    {
+        NameValueCollection Headers { get; }
+
+        IRestResponse Get();
+
+        IRestResponse<T> Get<T>();
+
+        IRestResponse Get(string resourceName);
+
+        IRestResponse<T> Get<T>(string resourceName);
+
+        IRestResponse Get(string resourceName, string id);
+
+        IRestResponse<T> Get<T>(string resourceName, string id);
+
+        void AddHeader(string name, string value);
+    }
+
+    public class RestClient : IRestClient
     {
         public static Func<IHttp> HttpFactory = () => new Http();
         private readonly IHttp _http;
@@ -33,13 +52,20 @@ namespace RestLib
             Headers = new NameValueCollection();
         }
 
-        public Dictionary<string, IDeserializer> ContentHandlers { get; set; }
+        private Dictionary<string, IDeserializer> ContentHandlers { get; set; }
 
         public NameValueCollection Headers { get; private set; }
 
         public IRestResponse Get()
         {
             return PerformGet(_baseAddress);
+        }
+
+        public IRestResponse<T> Get<T>()
+        {
+            var response = Get();
+
+            return MakeGenericResponse<T>(response);
         }
 
         public IRestResponse Get(string resourceName)
@@ -59,12 +85,38 @@ namespace RestLib
             var newResponse = new RestResponse<T>
             {
                 Content = response.Content,
-                StatusCode = response.StatusCode
+                StatusCode = response.StatusCode,
+                ContentType = response.ContentType
             };
-            var deserializer = GetContentDeserializer(response.ContentType);
-            newResponse.Data = deserializer.Deserialize<T>(response.Content);
+
+            if (response.Content == null)
+            {
+                newResponse.Data = default(T);
+            }
+            else
+            {
+                var deserializer = GetContentDeserializer(response.ContentType);
+                newResponse.Data = deserializer.Deserialize<T>(response.Content);
+            }
 
             return newResponse;
+        }
+
+        public IRestResponse Get(string resourceName, string id)
+        {
+            return PerformGet(string.Format("{0}/{1}/{2}", _baseAddress, resourceName, id));
+        }
+
+        public IRestResponse<T> Get<T>(string resourceName, string id)
+        {
+            var response = Get(resourceName, id);
+
+            return MakeGenericResponse<T>(response);
+        }
+
+        public void AddHeader(string name, string value)
+        {
+            Headers.Add(name, value);
         }
 
         private IDeserializer GetContentDeserializer(string contentType)
@@ -79,16 +131,6 @@ namespace RestLib
             }
 
             return handler;
-        }
-
-        public IRestResponse Get(string resourceName, string id)
-        {
-            return PerformGet(string.Format("{0}/{1}/{2}", _baseAddress, resourceName, id));
-        }
-
-        public void AddHeader(string name, string value)
-        {
-            Headers.Add(name, value);
         }
 
         private IRestResponse PerformGet(string url)

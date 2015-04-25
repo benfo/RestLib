@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using RestLib.Tests.Properties;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
-using RestLib.Tests.Properties;
 
 namespace RestLib.Tests.FakeApi
 {
@@ -31,12 +31,9 @@ namespace RestLib.Tests.FakeApi
         }
 
         [Route("customers/{customerId}")]
-        public HttpResponseMessage GetCustomer(int customerId)
+        public CustomerDto GetCustomer(int customerId)
         {
-            return new HttpResponseMessage
-            {
-                Content = new StringContent(string.Format(Resources.CustomerDtoFormat, customerId))
-            };
+            return new CustomerDto { CustomerId = customerId };
         }
 
         [Route("customers-requires-header")]

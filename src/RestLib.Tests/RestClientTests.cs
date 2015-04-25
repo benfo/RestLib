@@ -36,6 +36,17 @@ namespace RestLib.Tests
         }
 
         [Test]
+        public void Make_a_get_request_without_parameters_and_deserialize()
+        {
+            var result = client.Get<CustomerDto>();
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(result.Content, Is.EqualTo(null));
+            Assert.That(result.Data, Is.EqualTo(null));
+        }
+
+        [Test]
         public void Make_a_get_request_to_a_resource_root()
         {
             var response = client.Get("customers");
@@ -76,6 +87,16 @@ namespace RestLib.Tests
 
             Assert.That(data, Is.Not.Null);
             Assert.That(data.Count, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void Make_a_get_request_to_a_resource_identifier_and_deserialize()
+        {
+            var response = client.Get<CustomerDto>("customers", "2");
+            var data = response.Data;
+
+            Assert.That(data, Is.Not.Null);
+            Assert.That(data.CustomerId, Is.EqualTo(2));
         }
     }
 }
