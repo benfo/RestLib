@@ -134,10 +134,10 @@ namespace RestLib
             return PerformGet(uri);
         }
 
-        public IRestResponse<IEnumerable<T>> Get<T>()
+        public IRestResponse<T> Get<T>()
         {
             var response = Get();
-            return response.ToGenericResponse<IEnumerable<T>>();
+            return response.ToGenericResponse<T>();
         }
 
         public IRestResponse Get(string id)
@@ -331,7 +331,7 @@ namespace RestLib
     {
         IRestResponse Get();
 
-        IRestResponse<IEnumerable<T>> Get<T>();
+        IRestResponse<T> Get<T>();
 
         IRestResponse Get(string id);
 

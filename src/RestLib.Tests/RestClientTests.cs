@@ -82,7 +82,7 @@ namespace RestLib.Tests
         public void Make_a_get_request_to_a_resource_root_and_deserialize(string header, string value)
         {
             client.Headers.Add(header, value);
-            var response = client.Resource("customers").Get<CustomerDto>();
+            var response = client.Resource("customers").Get<List<CustomerDto>>();
             var data = response.Data;
 
             Assert.That(data, Is.Not.Null);
@@ -115,7 +115,7 @@ namespace RestLib.Tests
             var response = client.Resource("customers")
                 .AddQueryParameter("name", "Jane")
                 .AddQueryParameter("surname", "Wade")
-                .Get<CustomerDto>();
+                .Get<List<CustomerDto>>();
 
             var customer = response.Data.FirstOrDefault();
 
