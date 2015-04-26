@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System;
+using NUnit.Framework;
 using RestLib.Tests.FakeApi;
 using System.Collections.Generic;
 using System.Linq;
@@ -135,8 +136,9 @@ namespace RestLib.Tests
                 .Post(customer);
             var data = response.Data;
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
             Assert.That(data.Id, Is.EqualTo(11));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+            Assert.That(response.Headers["Location"], Is.EqualTo(BaseAddress + "/" + ResourceName + "/11"));
         }
     }
 }

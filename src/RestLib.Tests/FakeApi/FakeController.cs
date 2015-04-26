@@ -21,7 +21,7 @@ namespace RestLib.Tests.FakeApi
             config.MapHttpAttributeRoutes();
         }
 
-        [Route("customers/{id}")]
+        [Route("customers/{id}", Name = "customers")]
         public CustomerDto GetCustomer(int id)
         {
             var customer = CustomerStore.FirstOrDefault(c => c.Id == id);
@@ -32,7 +32,7 @@ namespace RestLib.Tests.FakeApi
             throw new HttpResponseException(HttpStatusCode.NotFound);
         }
 
-        [Route("customers", Name = "customers")]
+        [Route("customers")]
         public HttpResponseMessage PostCustomer(CustomerDto customer)
         {
             var response = Request.CreateResponse(HttpStatusCode.Created, customer);

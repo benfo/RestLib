@@ -137,6 +137,7 @@ namespace RestLib
             var uri = BuildUri();
             var body = JsonSerializer.Serialize(obj);
             Parameters.Add(new Parameter(JsonSerializer.ContentType, body, ParameterType.RequestBody));
+            
             return PerformPost(uri);
         }
 
@@ -211,7 +212,8 @@ namespace RestLib
             {
                 StatusCode = httpResponse.StatusCode,
                 Content = httpResponse.Content,
-                ContentType = httpResponse.ContentType
+                ContentType = httpResponse.ContentType,
+                Headers = httpResponse.Headers
             };
         }
 
@@ -301,7 +303,8 @@ namespace RestLib
             {
                 Content = response.Content,
                 StatusCode = response.StatusCode,
-                ContentType = response.ContentType
+                ContentType = response.ContentType,
+                Headers = response.Headers
             };
 
             if (response.Content == null)
@@ -460,6 +463,8 @@ namespace RestLib
         string Content { get; set; }
 
         string ContentType { get; set; }
+
+        NameValueCollection Headers { get; }
     }
 
     public interface IRestResponse<T> : IRestResponse
@@ -469,11 +474,18 @@ namespace RestLib
 
     public class RestResponse : IRestResponse
     {
+        public RestResponse()
+        {
+            Headers = new NameValueCollection();
+        }
+
         public HttpStatusCode StatusCode { get; set; }
 
         public string Content { get; set; }
 
         public string ContentType { get; set; }
+       
+        public NameValueCollection Headers { get; protected internal set; }
     }
 
     public class RestResponse<T> : RestResponse, IRestResponse<T>
@@ -553,12 +565,22 @@ namespace RestLib
 
                 var contentString = response.Content != null ? response.Content.ReadAsStringAsync().Result : null;
 
-                return new HttpResponse
+                var httpResponse = new HttpResponse
                 {
                     StatusCode = response.StatusCode,
                     Content = contentString,
                     ContentType = GetContentType(response)
                 };
+
+                foreach (var header in response.Headers)
+                {
+                    foreach (var headerValue in header.Value)
+                    {
+                        httpResponse.Headers.Add(header.Key, headerValue);
+                    }
+                }
+
+                return httpResponse;
             }
         }
 
@@ -610,10 +632,17 @@ namespace RestLib
 
     public class HttpResponse
     {
+        public HttpResponse()
+        {
+            Headers = new NameValueCollection();
+        }
+
         public HttpStatusCode StatusCode { get; set; }
 
         public string Content { get; set; }
 
         public string ContentType { get; set; }
+        
+        public NameValueCollection Headers { get; private set; }
     }
 }
