@@ -277,6 +277,14 @@ namespace RestLib
         IRestResponse<T> Get<T>(string id);
 
         IRestRequest AddMatrixParameter(string name, string value);
+
+        IRestRequest AddQuery(string name, string value);
+
+        IRestRequest AddHeader(string name, string value);
+
+        NameValueCollection Headers { get; }
+
+        List<Parameter> Parameters { get; }
     }
 
     public interface IDeserializer

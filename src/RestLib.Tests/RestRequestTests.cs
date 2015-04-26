@@ -85,7 +85,7 @@ namespace RestLib.Tests
             Assert.That(matrixParameter.Value, Is.EqualTo(value));
         }
 
-        private RestRequest GetRestRequest(string resourceName)
+        private IRestRequest GetRestRequest(string resourceName)
         {
             var request = new RestRequest(EndPoint, resourceName, http.Object);
             return request;
