@@ -32,6 +32,19 @@ namespace RestLib.Tests.FakeApi
             throw new HttpResponseException(HttpStatusCode.NotFound);
         }
 
+        [Route("customers", Name = "customers")]
+        public HttpResponseMessage PostCustomer(CustomerDto customer)
+        {
+            var response = Request.CreateResponse(HttpStatusCode.Created, customer);
+
+            // dummy save customer
+            customer.Id = 11;
+
+            string uri = Url.Link("customers", new { id = customer.Id });
+            response.Headers.Location = new Uri(uri);
+            return response;
+        }
+
         [Route("customers")]
         public IEnumerable<CustomerDto> GetCustomers(string name = null, string surname = null)
         {

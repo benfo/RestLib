@@ -10,6 +10,7 @@ namespace RestLib.Tests
     public class RestClientTests
     {
         private const string BaseAddress = "http://localhost:9001";
+        private string ResourceName = "customers";
         private IRestClient client;
 
         [TestFixtureSetUp]
@@ -49,7 +50,7 @@ namespace RestLib.Tests
         [Test]
         public void Make_a_get_request_to_a_resource_root()
         {
-            var response = client.Resource("customers").Get();
+            var response = client.Resource(ResourceName).Get();
             var content = response.Content;
 
             Assert.That(content, Contains.Substring("Id"));
@@ -58,7 +59,7 @@ namespace RestLib.Tests
         [Test]
         public void Make_a_get_request_to_a_resource_identifier()
         {
-            var response = client.Resource("customers").Get("1");
+            var response = client.Resource(ResourceName).Get("1");
             var content = response.Content;
 
             Assert.That(content, Contains.Substring("Id"));
@@ -82,7 +83,7 @@ namespace RestLib.Tests
         public void Make_a_get_request_to_a_resource_root_and_deserialize(string header, string value)
         {
             client.Headers.Add(header, value);
-            var response = client.Resource("customers").Get<List<CustomerDto>>();
+            var response = client.Resource(ResourceName).Get<List<CustomerDto>>();
             var data = response.Data;
 
             Assert.That(data, Is.Not.Null);
@@ -92,7 +93,7 @@ namespace RestLib.Tests
         [Test]
         public void Make_a_get_request_to_a_resource_identifier_and_deserialize()
         {
-            var response = client.Resource("customers").Get<CustomerDto>("2");
+            var response = client.Resource(ResourceName).Get<CustomerDto>("2");
             var data = response.Data;
 
             Assert.That(data, Is.Not.Null);
@@ -102,7 +103,7 @@ namespace RestLib.Tests
         [Test]
         public void Make_a_get_request_to_a_resource_that_does_not_exist()
         {
-            var response = client.Resource("customers").Get<CustomerDto>("10");
+            var response = client.Resource(ResourceName).Get<CustomerDto>("10");
             var data = response.Data;
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
@@ -112,7 +113,7 @@ namespace RestLib.Tests
         [Test]
         public void Make_a_get_request_using_query_string_parameters()
         {
-            var response = client.Resource("customers")
+            var response = client.Resource(ResourceName)
                 .AddQueryParameter("name", "Jane")
                 .AddQueryParameter("surname", "Wade")
                 .Get<List<CustomerDto>>();
@@ -122,6 +123,20 @@ namespace RestLib.Tests
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
             Assert.That(customer, Is.Not.Null);
             Assert.That(customer.Name, Is.EqualTo("Jane"));
+        }
+
+        [Test]
+        public void Make_a_post_request_to_a_resource()
+        {
+            var customer = new CustomerDto { Name = "Peter", Surname = "Pan" };
+
+            var response = client
+                .Resource(ResourceName)
+                .Post(customer);
+            var data = response.Data;
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created));
+            Assert.That(data.Id, Is.EqualTo(11));
         }
     }
 }

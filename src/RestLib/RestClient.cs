@@ -119,6 +119,7 @@ namespace RestLib
         {
             Headers = new NameValueCollection();
             Parameters = new List<Parameter>();
+            JsonSerializer = new NewtonsoftJsonSerializer();
 
             _endPoint = new Uri(endPoint);
             _resourceName = resourceName;
@@ -128,6 +129,23 @@ namespace RestLib
         public NameValueCollection Headers { get; private set; }
 
         public List<Parameter> Parameters { get; private set; }
+
+        public ISerializer JsonSerializer { get; set; }
+
+        public IRestResponse Post(object obj)
+        {
+            var uri = BuildUri();
+            var body = JsonSerializer.Serialize(obj);
+            Parameters.Add(new Parameter(JsonSerializer.ContentType, body, ParameterType.RequestBody));
+            return PerformPost(uri);
+        }
+
+        public IRestResponse<T> Post<T>(T obj)
+        {
+            var response = Post((object)obj);
+
+            return response.ToGenericResponse<T>();
+        }
 
         public IRestResponse Get()
         {
@@ -173,11 +191,7 @@ namespace RestLib
 
         private IRestResponse PerformGet(Uri uri)
         {
-            _http.Url = uri;
-            foreach (var headerName in Headers.AllKeys)
-            {
-                _http.Headers.Add(headerName, Headers[headerName]);
-            }
+            ConfigureHttp(uri);
 
             var httpResponse = _http.Execute(Method.GET);
 
@@ -187,6 +201,34 @@ namespace RestLib
                 Content = httpResponse.Content,
                 ContentType = httpResponse.ContentType
             };
+        }
+
+        private IRestResponse PerformPost(Uri uri)
+        {
+            ConfigureHttp(uri);
+            var httpResponse = _http.Execute(Method.POST);
+            return new RestResponse
+            {
+                StatusCode = httpResponse.StatusCode,
+                Content = httpResponse.Content,
+                ContentType = httpResponse.ContentType
+            };
+        }
+
+        private void ConfigureHttp(Uri uri)
+        {
+            _http.Url = uri;
+            foreach (var headerName in Headers.AllKeys)
+            {
+                _http.Headers.Add(headerName, Headers[headerName]);
+            }
+
+            var bodyParm = Parameters.FirstOrDefault(p => p.Type == ParameterType.RequestBody);
+            if (bodyParm != null)
+            {
+                _http.RequestBody = bodyParm.Value;
+                _http.RequestContentType = bodyParm.Name;
+            }
         }
 
         private Uri BuildUri(string resourceIdentifier = null)
@@ -268,7 +310,7 @@ namespace RestLib
             }
             else
             {
-                if (response.StatusCode == HttpStatusCode.OK)
+                if (response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Created)
                 {
                     var deserializer = ContentHandlerProvider.GetContentDeserializer(response.ContentType);
                     newResponse.Data = deserializer.Deserialize<T>(response.Content);
@@ -317,7 +359,8 @@ namespace RestLib
     public enum ParameterType
     {
         QueryString,
-        Matrix
+        Matrix,
+        RequestBody
     }
 
     public class Parameter
@@ -355,11 +398,24 @@ namespace RestLib
         NameValueCollection Headers { get; }
 
         List<Parameter> Parameters { get; }
+
+        IRestResponse Post(object obj);
+        
+        IRestResponse<T> Post<T>(T obj);
+
+        ISerializer JsonSerializer { get; set; }
     }
 
     public interface IDeserializer
     {
         T Deserialize<T>(string content);
+    }
+
+    public interface ISerializer
+    {
+        string Serialize(object obj);
+
+        string ContentType { get; set; }
     }
 
     public class NewtonsoftJsonDeserializer : IDeserializer
@@ -368,6 +424,21 @@ namespace RestLib
         {
             return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(content);
         }
+    }
+
+    public class NewtonsoftJsonSerializer : ISerializer
+    {
+        public NewtonsoftJsonSerializer()
+        {
+            ContentType = "application/json";
+        }
+
+        public string Serialize(object obj)
+        {
+            return Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+        }
+
+        public string ContentType { get; set; }
     }
 
     public class DotNetXmlDeserializer : IDeserializer
@@ -416,6 +487,10 @@ namespace RestLib
 
         NameValueCollection Headers { get; }
 
+        string RequestBody { get; set; }
+
+        string RequestContentType { get; set; }
+
         HttpResponse Execute(Method method);
     }
 
@@ -459,9 +534,13 @@ namespace RestLib
 
         public NameValueCollection Headers { get; private set; }
 
+        public string RequestBody { get; set; }
+
+        public string RequestContentType { get; set; }
+
         public HttpResponse Execute(Method method)
         {
-            var request = BuildRequest(Url, method, Headers);
+            var request = BuildRequest(method);
 
             return GetResponse(request);
         }
@@ -495,13 +574,13 @@ namespace RestLib
             return contentType.MediaType;
         }
 
-        private static HttpRequestMessage BuildRequest(Uri url, Method method, NameValueCollection headers)
+        private HttpRequestMessage BuildRequest(Method method)
         {
-            var request = new HttpRequestMessage { RequestUri = url };
+            var request = new HttpRequestMessage { RequestUri = Url };
 
-            foreach (var name in headers.AllKeys)
+            foreach (var name in Headers.AllKeys)
             {
-                var value = headers[name];
+                var value = Headers[name];
                 request.Headers.Add(name, value);
             }
 
@@ -515,9 +594,12 @@ namespace RestLib
                 case Method.GET:
                     request.Method = HttpMethod.Get;
                     break;
-                //case "POST":
-                //    request.Method = HttpMethod.Post;
-                //    break;
+
+                case Method.POST:
+                    request.Method = HttpMethod.Post;
+                    request.Content = new StringContent(RequestBody, Encoding.UTF8, RequestContentType);
+                    break;
+
                 default:
                     throw new NotImplementedException(string.Format("Method '{0}' not implemented.", method));
             }
