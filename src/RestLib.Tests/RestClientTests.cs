@@ -1,6 +1,5 @@
 ﻿using NUnit.Framework;
 using RestLib.Tests.FakeApi;
-using RestLib.Tests.Properties;
 using System.Collections.Generic;
 using System.Net;
 
@@ -52,7 +51,7 @@ namespace RestLib.Tests
             var response = client.Get("customers");
             var content = response.Content;
 
-            Assert.That(content, Is.EqualTo(Resources.CustomersDto));
+            Assert.That(content, Contains.Substring("CustomerId"));
         }
 
         [Test]
@@ -61,7 +60,7 @@ namespace RestLib.Tests
             var response = client.Get("customers", "1");
             var content = response.Content;
 
-            Assert.That(content, Is.EqualTo(string.Format(Resources.CustomerDtoFormat, "1")));
+            Assert.That(content, Contains.Substring("CustomerId"));
         }
 
         [Test]
@@ -97,6 +96,16 @@ namespace RestLib.Tests
 
             Assert.That(data, Is.Not.Null);
             Assert.That(data.CustomerId, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Make_a_get_request_to_a_resource_that_does_not_exist()
+        {
+            var response = client.Get<CustomerDto>("customers", "10");
+            var data = response.Data;
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+            Assert.That(data, Is.Null);
         }
     }
 }

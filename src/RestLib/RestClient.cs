@@ -95,8 +95,15 @@ namespace RestLib
             }
             else
             {
-                var deserializer = GetContentDeserializer(response.ContentType);
-                newResponse.Data = deserializer.Deserialize<T>(response.Content);
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    var deserializer = GetContentDeserializer(response.ContentType);
+                    newResponse.Data = deserializer.Deserialize<T>(response.Content);
+                }
+                else
+                {
+                    newResponse.Data = default(T);
+                }
             }
 
             return newResponse;
@@ -144,6 +151,153 @@ namespace RestLib
                 ContentType = httpResponse.ContentType
             };
         }
+
+        public IRestRequest Resource(string resourceName)
+        {
+            return new RestRequest(_baseAddress, resourceName, HttpFactory());
+        }
+    }
+
+    public class RestRequest : IRestRequest
+    {
+        private readonly Uri _endPoint;
+        private readonly string _resourceName;
+        private readonly IHttp _http;
+
+        public RestRequest(string endPoint, string resourceName, IHttp http)
+        {
+            Headers = new NameValueCollection();
+            Parameters = new List<Parameter>();
+
+            _endPoint = new Uri(endPoint);
+            _resourceName = resourceName;
+            _http = http;
+        }
+
+        public NameValueCollection Headers { get; private set; }
+
+        public List<Parameter> Parameters { get; private set; }
+
+        public IRestResponse Get()
+        {
+            var uri = BuildUri();
+            return PerformGet(uri);
+        }
+
+        public IRestResponse<IEnumerable<T>> Get<T>()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IRestResponse Get(string id)
+        {
+            var uri = BuildUri(id);
+            return PerformGet(uri);
+        }
+
+        public IRestResponse<T> Get<T>(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IRestRequest AddMatrixParameter(string name, string value)
+        {
+            Parameters.Add(new Parameter(name, value, ParameterType.Matrix));
+            return this;
+        }
+
+        private IRestResponse PerformGet(Uri uri)
+        {
+            var httpResponse = _http.Request(uri.ToString(), Method.GET, Headers);
+
+            return new RestResponse
+            {
+                StatusCode = httpResponse.StatusCode,
+                Content = httpResponse.Content,
+                ContentType = httpResponse.ContentType
+            };
+        }
+
+        private Uri BuildUri(string resourceIdentifier = null)
+        {
+            var builder = new UriBuilder(_endPoint)
+            {
+                Path = PathCombine(_resourceName, resourceIdentifier)
+            };
+
+            // Don't include port 80/443 in the Uri.
+            if (builder.Uri.IsDefaultPort)
+            {
+                builder.Port = -1;
+            }
+
+            return builder.Uri;
+        }
+
+        private static string PathCombine(string path1, string path2)
+        {
+            if (string.IsNullOrWhiteSpace(path1))
+            {
+                return path2;
+            }
+
+            if (string.IsNullOrWhiteSpace(path2))
+            {
+                return path1;
+            }
+
+            path1 = path1.TrimEnd('/', '\\');
+            path2 = path2.TrimStart('/', '\\');
+
+            return string.Format("{0}/{1}", path1, path2);
+        }
+
+        public IRestRequest AddHeader(string name, string value)
+        {
+            Headers.Add(name, value);
+            return this;
+        }
+
+        public IRestRequest AddQuery(string name, string value)
+        {
+            Parameters.Add(new Parameter(name, value, ParameterType.Query));
+            return this;
+        }
+    }
+
+    public enum ParameterType
+    {
+        Query,
+        Matrix
+    }
+
+    public class Parameter
+    {
+        public Parameter(string name, string value, ParameterType type)
+        {
+            Name = name;
+            Value = value;
+            Type = type;
+        }
+
+        public string Name { get; private set; }
+
+        public string Value { get; private set; }
+
+        public ParameterType Type { get; private set; }
+    }
+
+    public interface IRestRequest
+    {
+        IRestResponse Get();
+
+        IRestResponse<IEnumerable<T>> Get<T>();
+
+        IRestResponse Get(string id);
+
+        IRestResponse<T> Get<T>(string id);
+
+        IRestRequest AddMatrixParameter(string name, string value);
     }
 
     public interface IDeserializer
@@ -254,9 +408,21 @@ namespace RestLib
                 {
                     StatusCode = response.StatusCode,
                     Content = contentString,
-                    ContentType = response.Content != null ? response.Content.Headers.ContentType.MediaType : null
+                    ContentType = GetContentType(response)
                 };
             }
+        }
+
+        private static string GetContentType(HttpResponseMessage response)
+        {
+            if (response.Content == null)
+                return null;
+
+            var contentType = response.Content.Headers.ContentType;
+            if (contentType == null)
+                return null;
+
+            return contentType.MediaType;
         }
 
         private static HttpRequestMessage BuildRequest(string url, Method method, NameValueCollection headers)
