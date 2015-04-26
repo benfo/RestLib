@@ -138,7 +138,7 @@ namespace RestLib
             var body = JsonSerializer.Serialize(obj);
             Parameters.Add(new Parameter(JsonSerializer.ContentType, body, ParameterType.RequestBody));
             
-            return PerformPost(uri);
+            return Execute(uri, Method.POST);
         }
 
         public IRestResponse<T> Post<T>(T obj)
@@ -151,7 +151,7 @@ namespace RestLib
         public IRestResponse Get()
         {
             var uri = BuildUri();
-            return PerformGet(uri);
+            return Execute(uri, Method.GET);
         }
 
         public IRestResponse<T> Get<T>()
@@ -163,7 +163,7 @@ namespace RestLib
         public IRestResponse Get(string id)
         {
             var uri = BuildUri(id);
-            return PerformGet(uri);
+            return Execute(uri, Method.GET);
         }
 
         public IRestResponse<T> Get<T>(string id)
@@ -190,36 +190,13 @@ namespace RestLib
             return this;
         }
 
-        private IRestResponse PerformGet(Uri uri)
+        private IRestResponse Execute(Uri uri, Method method)
         {
             ConfigureHttp(uri);
 
-            var httpResponse = _http.Execute(Method.GET);
+            var httpResponse = _http.Execute(method);
 
-            return new RestResponse
-            {
-                StatusCode = httpResponse.StatusCode,
-                StatusDescription = httpResponse.StatusDescription,
-                Content = httpResponse.Content,
-                ContentType = httpResponse.ContentType,
-                Headers = httpResponse.Headers
-            };
-        }
-
-        private IRestResponse PerformPost(Uri uri)
-        {
-            ConfigureHttp(uri);
-            
-            var httpResponse = _http.Execute(Method.POST);
-            
-            return new RestResponse
-            {
-                StatusCode = httpResponse.StatusCode,
-                StatusDescription = httpResponse.StatusDescription,
-                Content = httpResponse.Content,
-                ContentType = httpResponse.ContentType,
-                Headers = httpResponse.Headers
-            };
+            return httpResponse.ToRestResponse();
         }
 
         private void ConfigureHttp(Uri uri)
@@ -297,6 +274,21 @@ namespace RestLib
             path2 = path2.TrimStart('/', '\\');
 
             return string.Format("{0}/{1}", path1, path2);
+        }
+    }
+
+    public static class HttpResponseExtensions
+    {
+        public static IRestResponse ToRestResponse(this HttpResponse httpResponse)
+        {
+            return new RestResponse
+            {
+                StatusCode = httpResponse.StatusCode,
+                StatusDescription = httpResponse.StatusDescription,
+                Content = httpResponse.Content,
+                ContentType = httpResponse.ContentType,
+                Headers = httpResponse.Headers
+            };
         }
     }
 
