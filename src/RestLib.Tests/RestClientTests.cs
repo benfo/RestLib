@@ -52,7 +52,7 @@ namespace RestLib.Tests
             var response = client.Resource("customers").Get();
             var content = response.Content;
 
-            Assert.That(content, Contains.Substring("CustomerId"));
+            Assert.That(content, Contains.Substring("Id"));
         }
 
         [Test]
@@ -61,7 +61,7 @@ namespace RestLib.Tests
             var response = client.Resource("customers").Get("1");
             var content = response.Content;
 
-            Assert.That(content, Contains.Substring("CustomerId"));
+            Assert.That(content, Contains.Substring("Id"));
         }
 
         [Test]
@@ -96,7 +96,7 @@ namespace RestLib.Tests
             var data = response.Data;
 
             Assert.That(data, Is.Not.Null);
-            Assert.That(data.CustomerId, Is.EqualTo(2));
+            Assert.That(data.Id, Is.EqualTo(2));
         }
 
         [Test]

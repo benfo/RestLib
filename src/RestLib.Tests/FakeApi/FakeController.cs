@@ -11,9 +11,9 @@ namespace RestLib.Tests.FakeApi
     {
         private static readonly List<CustomerDto> CustomerStore = new List<CustomerDto>
             {
-                new CustomerDto {CustomerId = 1, Name="John", Surname = "Slow"},
-                new CustomerDto {CustomerId = 2, Name="Jane", Surname = "Wade"},
-                new CustomerDto {CustomerId = 3, Name="John", Surname = "Fast"}
+                new CustomerDto {Id = 1, Name="John", Surname = "Slow"},
+                new CustomerDto {Id = 2, Name="Jane", Surname = "Wade"},
+                new CustomerDto {Id = 3, Name="John", Surname = "Fast"}
             };
 
         public static void RegisterRoutes(HttpConfiguration config)
@@ -21,10 +21,10 @@ namespace RestLib.Tests.FakeApi
             config.MapHttpAttributeRoutes();
         }
 
-        [Route("customers/{customerId}")]
-        public CustomerDto GetCustomer(int customerId)
+        [Route("customers/{id}")]
+        public CustomerDto GetCustomer(int id)
         {
-            var customer = CustomerStore.FirstOrDefault(c => c.CustomerId == customerId);
+            var customer = CustomerStore.FirstOrDefault(c => c.Id == id);
 
             if (customer != null)
                 return customer;
