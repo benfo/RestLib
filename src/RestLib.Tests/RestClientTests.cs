@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using RestLib.Tests.FakeApi;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 
 namespace RestLib.Tests
@@ -9,7 +10,7 @@ namespace RestLib.Tests
     public class RestClientTests
     {
         private const string BaseAddress = "http://localhost:9001";
-        private RestClient client;
+        private IRestClient client;
 
         [TestFixtureSetUp]
         public void SetUp()
@@ -48,7 +49,7 @@ namespace RestLib.Tests
         [Test]
         public void Make_a_get_request_to_a_resource_root()
         {
-            var response = client.Get("customers");
+            var response = client.Resource("customers").Get();
             var content = response.Content;
 
             Assert.That(content, Contains.Substring("CustomerId"));
@@ -57,7 +58,7 @@ namespace RestLib.Tests
         [Test]
         public void Make_a_get_request_to_a_resource_identifier()
         {
-            var response = client.Get("customers", "1");
+            var response = client.Resource("customers").Get("1");
             var content = response.Content;
 
             Assert.That(content, Contains.Substring("CustomerId"));
@@ -67,7 +68,7 @@ namespace RestLib.Tests
         public void Make_a_get_request_using_headers()
         {
             client.AddHeader("header", "value");
-            var response = client.Get("customers-requires-header");
+            var response = client.Resource("customers-requires-header").Get();
             var content = response.Content;
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
@@ -81,17 +82,17 @@ namespace RestLib.Tests
         public void Make_a_get_request_to_a_resource_root_and_deserialize(string header, string value)
         {
             client.Headers.Add(header, value);
-            var response = client.Get<List<CustomerDto>>("customers");
+            var response = client.Resource("customers").Get<CustomerDto>();
             var data = response.Data;
 
             Assert.That(data, Is.Not.Null);
-            Assert.That(data.Count, Is.GreaterThan(0));
+            Assert.That(data.Count(), Is.GreaterThan(0));
         }
 
         [Test]
         public void Make_a_get_request_to_a_resource_identifier_and_deserialize()
         {
-            var response = client.Get<CustomerDto>("customers", "2");
+            var response = client.Resource("customers").Get<CustomerDto>("2");
             var data = response.Data;
 
             Assert.That(data, Is.Not.Null);
@@ -101,7 +102,7 @@ namespace RestLib.Tests
         [Test]
         public void Make_a_get_request_to_a_resource_that_does_not_exist()
         {
-            var response = client.Get<CustomerDto>("customers", "10");
+            var response = client.Resource("customers").Get<CustomerDto>("10");
             var data = response.Data;
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));

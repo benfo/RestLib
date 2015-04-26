@@ -16,24 +16,75 @@ namespace RestLib
 
         IRestResponse<T> Get<T>();
 
-        IRestResponse Get(string resourceName);
-
-        IRestResponse<T> Get<T>(string resourceName);
-
-        IRestResponse Get(string resourceName, string id);
-
-        IRestResponse<T> Get<T>(string resourceName, string id);
-
         void AddHeader(string name, string value);
+
+        IRestRequest Resource(string resourceName);
     }
 
     public class RestClient : IRestClient
     {
         public static Func<IHttp> HttpFactory = () => new Http();
         private readonly IHttp _http;
-        private readonly string _baseAddress;
+        private readonly string _endPoint;
 
-        public RestClient(string baseAddress)
+        public RestClient(string endPoint)
+        {
+            _http = HttpFactory();
+            _endPoint = endPoint;
+
+            Headers = new NameValueCollection();
+        }
+
+        public NameValueCollection Headers { get; private set; }
+
+        public IRestResponse Get()
+        {
+            var request = BuildRequest();
+            return request.Get();
+        }
+
+        public IRestResponse<T> Get<T>()
+        {
+            var response = Get();
+            return response.ToGenericResponse<T>();
+        }
+
+        public IRestResponse Get(string resourceName, string id)
+        {
+            var request = BuildRequest(resourceName);
+            return request.Get(id);
+        }
+
+        public IRestResponse<T> Get<T>(string resourceName, string id)
+        {
+            var response = Get(resourceName, id);
+            return response.ToGenericResponse<T>();
+        }
+
+        public void AddHeader(string name, string value)
+        {
+            Headers.Add(name, value);
+        }
+
+        public IRestRequest Resource(string resourceName)
+        {
+            return BuildRequest(resourceName);
+        }
+
+        private RestRequest BuildRequest(string resourceName = null)
+        {
+            var request = new RestRequest(_endPoint, resourceName, _http);
+            foreach (var name in Headers.AllKeys)
+            {
+                request.AddHeader(name, Headers[name]);
+            }
+            return request;
+        }
+    }
+
+    public static class ContentHandlerProvider
+    {
+        static ContentHandlerProvider()
         {
             ContentHandlers = new Dictionary<string, IDeserializer>
             {
@@ -45,88 +96,11 @@ namespace RestLib
                 //{"text/xml", new DotNetXmlDeserializer()},
                 //{"*", new DotNetXmlDeserializer()}
             };
-
-            _http = HttpFactory();
-            _baseAddress = baseAddress;
-
-            Headers = new NameValueCollection();
         }
 
-        private Dictionary<string, IDeserializer> ContentHandlers { get; set; }
+        public static Dictionary<string, IDeserializer> ContentHandlers { get; set; }
 
-        public NameValueCollection Headers { get; private set; }
-
-        public IRestResponse Get()
-        {
-            return PerformGet(_baseAddress);
-        }
-
-        public IRestResponse<T> Get<T>()
-        {
-            var response = Get();
-
-            return MakeGenericResponse<T>(response);
-        }
-
-        public IRestResponse Get(string resourceName)
-        {
-            return PerformGet(string.Format("{0}/{1}", _baseAddress, resourceName));
-        }
-
-        public IRestResponse<T> Get<T>(string resourceName)
-        {
-            var response = Get(resourceName);
-
-            return MakeGenericResponse<T>(response);
-        }
-
-        private IRestResponse<T> MakeGenericResponse<T>(IRestResponse response)
-        {
-            var newResponse = new RestResponse<T>
-            {
-                Content = response.Content,
-                StatusCode = response.StatusCode,
-                ContentType = response.ContentType
-            };
-
-            if (response.Content == null)
-            {
-                newResponse.Data = default(T);
-            }
-            else
-            {
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    var deserializer = GetContentDeserializer(response.ContentType);
-                    newResponse.Data = deserializer.Deserialize<T>(response.Content);
-                }
-                else
-                {
-                    newResponse.Data = default(T);
-                }
-            }
-
-            return newResponse;
-        }
-
-        public IRestResponse Get(string resourceName, string id)
-        {
-            return PerformGet(string.Format("{0}/{1}/{2}", _baseAddress, resourceName, id));
-        }
-
-        public IRestResponse<T> Get<T>(string resourceName, string id)
-        {
-            var response = Get(resourceName, id);
-
-            return MakeGenericResponse<T>(response);
-        }
-
-        public void AddHeader(string name, string value)
-        {
-            Headers.Add(name, value);
-        }
-
-        private IDeserializer GetContentDeserializer(string contentType)
+        public static IDeserializer GetContentDeserializer(string contentType)
         {
             if (contentType == null) throw new ArgumentNullException("contentType");
 
@@ -138,23 +112,6 @@ namespace RestLib
             }
 
             return handler;
-        }
-
-        private IRestResponse PerformGet(string url)
-        {
-            var httpResponse = _http.Request(url, Method.GET, Headers);
-
-            return new RestResponse
-            {
-                StatusCode = httpResponse.StatusCode,
-                Content = httpResponse.Content,
-                ContentType = httpResponse.ContentType
-            };
-        }
-
-        public IRestRequest Resource(string resourceName)
-        {
-            return new RestRequest(_baseAddress, resourceName, HttpFactory());
         }
     }
 
@@ -169,10 +126,23 @@ namespace RestLib
             Headers = new NameValueCollection();
             Parameters = new List<Parameter>();
 
+            ContentHandlers = new Dictionary<string, IDeserializer>
+            {
+                {"application/json", new NewtonsoftJsonDeserializer()},
+                {"text/json", new NewtonsoftJsonDeserializer()},
+                {"text/x-json", new NewtonsoftJsonDeserializer()},
+                {"text/javascript", new NewtonsoftJsonDeserializer()},
+                //{"application/xml", new DotNetXmlDeserializer()},
+                //{"text/xml", new DotNetXmlDeserializer()},
+                //{"*", new DotNetXmlDeserializer()}
+            };
+
             _endPoint = new Uri(endPoint);
             _resourceName = resourceName;
             _http = http;
         }
+
+        public Dictionary<string, IDeserializer> ContentHandlers { get; set; }
 
         public NameValueCollection Headers { get; private set; }
 
@@ -186,7 +156,8 @@ namespace RestLib
 
         public IRestResponse<IEnumerable<T>> Get<T>()
         {
-            throw new NotImplementedException();
+            var response = Get();
+            return response.ToGenericResponse<IEnumerable<T>>();
         }
 
         public IRestResponse Get(string id)
@@ -197,12 +168,25 @@ namespace RestLib
 
         public IRestResponse<T> Get<T>(string id)
         {
-            throw new NotImplementedException();
+            var response = Get(id);
+            return response.ToGenericResponse<T>();
         }
 
         public IRestRequest AddMatrixParameter(string name, string value)
         {
             Parameters.Add(new Parameter(name, value, ParameterType.Matrix));
+            return this;
+        }
+
+        public IRestRequest AddHeader(string name, string value)
+        {
+            Headers.Add(name, value);
+            return this;
+        }
+
+        public IRestRequest AddQuery(string name, string value)
+        {
+            Parameters.Add(new Parameter(name, value, ParameterType.Query));
             return this;
         }
 
@@ -251,17 +235,37 @@ namespace RestLib
 
             return string.Format("{0}/{1}", path1, path2);
         }
+    }
 
-        public IRestRequest AddHeader(string name, string value)
+    public static class RestResponseExtensions
+    {
+        public static IRestResponse<T> ToGenericResponse<T>(this IRestResponse response)
         {
-            Headers.Add(name, value);
-            return this;
-        }
+            var newResponse = new RestResponse<T>
+            {
+                Content = response.Content,
+                StatusCode = response.StatusCode,
+                ContentType = response.ContentType
+            };
 
-        public IRestRequest AddQuery(string name, string value)
-        {
-            Parameters.Add(new Parameter(name, value, ParameterType.Query));
-            return this;
+            if (response.Content == null)
+            {
+                newResponse.Data = default(T);
+            }
+            else
+            {
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    var deserializer = ContentHandlerProvider.GetContentDeserializer(response.ContentType);
+                    newResponse.Data = deserializer.Deserialize<T>(response.Content);
+                }
+                else
+                {
+                    newResponse.Data = default(T);
+                }
+            }
+
+            return newResponse;
         }
     }
 
