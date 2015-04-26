@@ -49,18 +49,6 @@ namespace RestLib
             return response.ToGenericResponse<T>();
         }
 
-        public IRestResponse Get(string resourceName, string id)
-        {
-            var request = BuildRequest(resourceName);
-            return request.Get(id);
-        }
-
-        public IRestResponse<T> Get<T>(string resourceName, string id)
-        {
-            var response = Get(resourceName, id);
-            return response.ToGenericResponse<T>();
-        }
-
         public void AddHeader(string name, string value)
         {
             Headers.Add(name, value);
@@ -126,23 +114,10 @@ namespace RestLib
             Headers = new NameValueCollection();
             Parameters = new List<Parameter>();
 
-            ContentHandlers = new Dictionary<string, IDeserializer>
-            {
-                {"application/json", new NewtonsoftJsonDeserializer()},
-                {"text/json", new NewtonsoftJsonDeserializer()},
-                {"text/x-json", new NewtonsoftJsonDeserializer()},
-                {"text/javascript", new NewtonsoftJsonDeserializer()},
-                //{"application/xml", new DotNetXmlDeserializer()},
-                //{"text/xml", new DotNetXmlDeserializer()},
-                //{"*", new DotNetXmlDeserializer()}
-            };
-
             _endPoint = new Uri(endPoint);
             _resourceName = resourceName;
             _http = http;
         }
-
-        public Dictionary<string, IDeserializer> ContentHandlers { get; set; }
 
         public NameValueCollection Headers { get; private set; }
 
