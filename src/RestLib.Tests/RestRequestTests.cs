@@ -1,4 +1,5 @@
-﻿using System.Collections.Specialized;
+﻿using System;
+using System.Collections.Specialized;
 using Moq;
 using NUnit.Framework;
 using System.Net;
@@ -20,24 +21,26 @@ namespace RestLib.Tests
         [Test]
         public void Make_a_get_request_to_a_resource_root()
         {
-            http.Setup(x => x.Request(EndPoint + "/resource", Method.GET, It.IsAny<NameValueCollection>()))
+            http.Setup(x => x.Execute(Method.GET))
                 .Returns(DefaultResponse());
             var request = GetRestRequest("resource");
 
             request.Get();
 
+            http.VerifySet(h => h.Url = new Uri(EndPoint + "/resource"));
             http.VerifyAll();
         }
 
         [Test]
         public void Make_a_get_request_to_a_resource_identifier()
         {
-            http.Setup(x => x.Request(EndPoint + "/resource/1", Method.GET, It.IsAny<NameValueCollection>()))
+            http.Setup(x => x.Execute(Method.GET))
               .Returns(DefaultResponse());
             var request = GetRestRequest("resource");
 
             request.Get("1");
 
+            http.VerifySet(h => h.Url = new Uri(EndPoint + "/resource/1"));
             http.VerifyAll();
         }
 
@@ -81,7 +84,7 @@ namespace RestLib.Tests
         [Test]
         public void Omit_empty_matrix_parameters_when_making_a_request()
         {
-            http.Setup(x => x.Request(EndPoint + "/resource;matrixparam1=value1;matrixparam2=value2", Method.GET, It.IsAny<NameValueCollection>()))
+            http.Setup(x => x.Execute(Method.GET))
              .Returns(DefaultResponse());
             var request = GetRestRequest("resource")
                 .AddMatrixParameter("matrixparam1", "value1")
@@ -90,20 +93,22 @@ namespace RestLib.Tests
 
             request.Get();
 
+            http.VerifySet(h => h.Url = new Uri(EndPoint + "/resource;matrixparam1=value1;matrixparam2=value2"));
             http.VerifyAll();
         }
 
         [Test]
         public void Make_a_request_using_matrix_parameters()
         {
-            http.Setup(x => x.Request(EndPoint + "/resource;matrixparam1=value1;matrixparam2=value2", Method.GET, It.IsAny<NameValueCollection>()))
-              .Returns(DefaultResponse());
+            http.Setup(x => x.Execute(Method.GET))
+                .Returns(DefaultResponse());
             var request = GetRestRequest("resource")
                 .AddMatrixParameter("matrixparam1", "value1")
                 .AddMatrixParameter("matrixparam2", "value2");
 
             request.Get();
 
+            http.VerifySet(h => h.Url = new Uri(EndPoint + "/resource;matrixparam1=value1;matrixparam2=value2"));
             http.VerifyAll();
         }
 

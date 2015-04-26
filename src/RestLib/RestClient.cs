@@ -173,7 +173,13 @@ namespace RestLib
 
         private IRestResponse PerformGet(Uri uri)
         {
-            var httpResponse = _http.Request(uri.ToString(), Method.GET, Headers);
+            _http.Url = uri;
+            foreach (var headerName in Headers.AllKeys)
+            {
+                _http.Headers.Add(headerName, Headers[headerName]);
+            }
+
+            var httpResponse = _http.Execute(Method.GET);
 
             return new RestResponse
             {
@@ -406,7 +412,11 @@ namespace RestLib
 
     public interface IHttp
     {
-        HttpResponse Request(string url, Method method, NameValueCollection headers);
+        Uri Url { get; set; }
+
+        NameValueCollection Headers { get; }
+
+        HttpResponse Execute(Method method);
     }
 
     public enum Method
@@ -440,9 +450,18 @@ namespace RestLib
             ClientCertificateOptions = ClientCertificateOption.Automatic
         };
 
-        public HttpResponse Request(string url, Method method, NameValueCollection headers)
+        public Http()
         {
-            var request = BuildRequest(url, method, headers);
+            Headers = new NameValueCollection();
+        }
+
+        public Uri Url { get; set; }
+
+        public NameValueCollection Headers { get; private set; }
+
+        public HttpResponse Execute(Method method)
+        {
+            var request = BuildRequest(Url, method, Headers);
 
             return GetResponse(request);
         }
@@ -476,9 +495,9 @@ namespace RestLib
             return contentType.MediaType;
         }
 
-        private static HttpRequestMessage BuildRequest(string url, Method method, NameValueCollection headers)
+        private static HttpRequestMessage BuildRequest(Uri url, Method method, NameValueCollection headers)
         {
-            var request = new HttpRequestMessage { RequestUri = new Uri(url) };
+            var request = new HttpRequestMessage { RequestUri = url };
 
             foreach (var name in headers.AllKeys)
             {
