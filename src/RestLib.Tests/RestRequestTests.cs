@@ -78,6 +78,18 @@ namespace RestLib.Tests
             AssertParameter(request.Parameters[0], ParameterType.QueryString, parmName, parmValue);
         }
 
+        [Test]
+        public void Make_a_request_using_matrix_parameters()
+        {
+            http.Setup(x => x.Request(EndPoint + "/resource;matrixparam1=value1;matrixparam2=value2", Method.GET, It.IsAny<NameValueCollection>()))
+              .Returns(DefaultResponse());
+            var request = GetRestRequest("resource")
+                .AddMatrixParameter("matrixparam1", "value1")
+                .AddMatrixParameter("matrixparam2", "value2");
+
+            request.Get();
+
+            http.VerifyAll();
         }
 
         private static void AssertParameter(Parameter matrixParameter, ParameterType type, string name, string value)

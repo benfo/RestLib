@@ -107,6 +107,9 @@ namespace RestLib
 
     public class RestRequest : IRestRequest
     {
+        const string QueryStringParameterDelimiter = "&";
+        const string MatrixParameterDelimiter = ";";
+
         private readonly Uri _endPoint;
         private readonly string _resourceName;
         private readonly IHttp _http;
@@ -192,19 +195,25 @@ namespace RestLib
                 builder.Port = -1;
             }
 
-            var parameters = Parameters.Where(p => p.Type == ParameterType.QueryString).ToList();
-            if (parameters.Any())
+            var queryStringParms = Parameters.Where(p => p.Type == ParameterType.QueryString).ToList();
+            if (queryStringParms.Any())
             {
-                var encodedParameters = EncodeParameters(parameters);
-                builder.Query = encodedParameters;
+                builder.Query = EncodeParameters(queryStringParms, QueryStringParameterDelimiter);
+            }
+
+            var matrixParams = Parameters.Where(p => p.Type == ParameterType.Matrix).ToList();
+            if (matrixParams.Any())
+            {
+                var encodedParameters = EncodeParameters(matrixParams, MatrixParameterDelimiter);
+                builder.Path = string.Concat(builder.Path, MatrixParameterDelimiter, encodedParameters);
             }
 
             return builder.Uri;
         }
 
-        private static string EncodeParameters(IEnumerable<Parameter> parameters)
+        private static string EncodeParameters(IEnumerable<Parameter> parameters, string delimiter)
         {
-            return string.Join("&", parameters.Select(EncodeParameter).ToArray());
+            return string.Join(delimiter, parameters.Select(EncodeParameter).ToArray());
         }
 
         private static string EncodeParameter(Parameter parameter)
