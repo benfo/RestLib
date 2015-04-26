@@ -75,7 +75,9 @@ namespace RestLib.Tests
             request.AddQueryParameter(parmName, parmValue);
 
             Assert.That(request.Parameters.Count, Is.EqualTo(1));
-            AssertParameter(request.Parameters[0], ParameterType.Query, parmName, parmValue);
+            AssertParameter(request.Parameters[0], ParameterType.QueryString, parmName, parmValue);
+        }
+
         }
 
         private static void AssertParameter(Parameter matrixParameter, ParameterType type, string name, string value)

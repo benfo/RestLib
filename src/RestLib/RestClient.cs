@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Xml.Serialization;
 
 namespace RestLib
@@ -161,7 +163,7 @@ namespace RestLib
 
         public IRestRequest AddQueryParameter(string name, string value)
         {
-            Parameters.Add(new Parameter(name, value, ParameterType.Query));
+            Parameters.Add(new Parameter(name, value, ParameterType.QueryString));
             return this;
         }
 
@@ -190,7 +192,26 @@ namespace RestLib
                 builder.Port = -1;
             }
 
+            var parameters = Parameters.Where(p => p.Type == ParameterType.QueryString).ToList();
+            if (parameters.Any())
+            {
+                var encodedParameters = EncodeParameters(parameters);
+                builder.Query = encodedParameters;
+            }
+
             return builder.Uri;
+        }
+
+        private static string EncodeParameters(IEnumerable<Parameter> parameters)
+        {
+            return string.Join("&", parameters.Select(EncodeParameter).ToArray());
+        }
+
+        private static string EncodeParameter(Parameter parameter)
+        {
+            return parameter.Value == null
+                ? string.Concat(parameter.Name.UrlEncode(), "=")
+                : string.Concat(parameter.Name.UrlEncode(), "=", parameter.Value.UrlEncode());
         }
 
         private static string PathCombine(string path1, string path2)
@@ -244,9 +265,40 @@ namespace RestLib
         }
     }
 
+    public static class StringExtensions
+    {
+        /// <summary>
+        /// Uses Uri.EscapeDataString() based on recommendations on MSDN
+        /// http://blogs.msdn.com/b/yangxind/archive/2006/11/09/don-t-use-net-system-uri-unescapedatastring-in-url-decoding.aspx
+        /// </summary>
+        public static string UrlEncode(this string input)
+        {
+            const int maxLength = 32766;
+            if (input == null)
+                throw new ArgumentNullException("input");
+
+            if (input.Length <= maxLength)
+                return Uri.EscapeDataString(input);
+
+            StringBuilder sb = new StringBuilder(input.Length * 2);
+            int index = 0;
+
+            while (index < input.Length)
+            {
+                int length = Math.Min(input.Length - index, maxLength);
+                string subString = input.Substring(index, length);
+
+                sb.Append(Uri.EscapeDataString(subString));
+                index += subString.Length;
+            }
+
+            return sb.ToString();
+        }
+    }
+
     public enum ParameterType
     {
-        Query,
+        QueryString,
         Matrix
     }
 

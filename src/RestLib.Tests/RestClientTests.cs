@@ -108,5 +108,20 @@ namespace RestLib.Tests
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
             Assert.That(data, Is.Null);
         }
+
+        [Test]
+        public void Make_a_get_request_using_query_string_parameters()
+        {
+            var response = client.Resource("customers")
+                .AddQueryParameter("name", "Jane")
+                .AddQueryParameter("surname", "Wade")
+                .Get<CustomerDto>();
+
+            var customer = response.Data.FirstOrDefault();
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(customer, Is.Not.Null);
+            Assert.That(customer.Name, Is.EqualTo("Jane"));
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -10,9 +11,9 @@ namespace RestLib.Tests.FakeApi
     {
         private static readonly List<CustomerDto> CustomerStore = new List<CustomerDto>
             {
-                new CustomerDto {CustomerId = 1, Name="John"},
-                new CustomerDto {CustomerId = 2, Name="Jane"},
-                new CustomerDto {CustomerId = 3, Name="John"}
+                new CustomerDto {CustomerId = 1, Name="John", Surname = "Slow"},
+                new CustomerDto {CustomerId = 2, Name="Jane", Surname = "Wade"},
+                new CustomerDto {CustomerId = 3, Name="John", Surname = "Fast"}
             };
 
         public static void RegisterRoutes(HttpConfiguration config)
@@ -32,9 +33,13 @@ namespace RestLib.Tests.FakeApi
         }
 
         [Route("customers")]
-        public List<CustomerDto> GetCustomers()
+        public IEnumerable<CustomerDto> GetCustomers(string name = null, string surname = null)
         {
-            return CustomerStore;
+            return CustomerStore
+                .Where(
+                    c =>
+                        (name == null || c.Name.Equals(name)) &&
+                        (surname == null || c.Surname.Equals(surname)));
         }
 
         [Route("customers-requires-header")]
