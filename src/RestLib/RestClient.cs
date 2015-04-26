@@ -159,7 +159,7 @@ namespace RestLib
             return this;
         }
 
-        public IRestRequest AddQuery(string name, string value)
+        public IRestRequest AddQueryParameter(string name, string value)
         {
             Parameters.Add(new Parameter(name, value, ParameterType.Query));
             return this;
@@ -278,7 +278,7 @@ namespace RestLib
 
         IRestRequest AddMatrixParameter(string name, string value);
 
-        IRestRequest AddQuery(string name, string value);
+        IRestRequest AddQueryParameter(string name, string value);
 
         IRestRequest AddHeader(string name, string value);
 

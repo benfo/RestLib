@@ -72,7 +72,7 @@ namespace RestLib.Tests
 
             const string parmName = "query";
             const string parmValue = "query-value";
-            request.AddQuery(parmName, parmValue);
+            request.AddQueryParameter(parmName, parmValue);
 
             Assert.That(request.Parameters.Count, Is.EqualTo(1));
             AssertParameter(request.Parameters[0], ParameterType.Query, parmName, parmValue);
