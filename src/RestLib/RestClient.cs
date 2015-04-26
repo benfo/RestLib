@@ -199,18 +199,23 @@ namespace RestLib
             return new RestResponse
             {
                 StatusCode = httpResponse.StatusCode,
+                StatusDescription = httpResponse.StatusDescription,
                 Content = httpResponse.Content,
-                ContentType = httpResponse.ContentType
+                ContentType = httpResponse.ContentType,
+                Headers = httpResponse.Headers
             };
         }
 
         private IRestResponse PerformPost(Uri uri)
         {
             ConfigureHttp(uri);
+            
             var httpResponse = _http.Execute(Method.POST);
+            
             return new RestResponse
             {
                 StatusCode = httpResponse.StatusCode,
+                StatusDescription = httpResponse.StatusDescription,
                 Content = httpResponse.Content,
                 ContentType = httpResponse.ContentType,
                 Headers = httpResponse.Headers
@@ -303,6 +308,7 @@ namespace RestLib
             {
                 Content = response.Content,
                 StatusCode = response.StatusCode,
+                StatusDescription = response.StatusDescription,
                 ContentType = response.ContentType,
                 Headers = response.Headers
             };
@@ -460,6 +466,8 @@ namespace RestLib
     {
         HttpStatusCode StatusCode { get; set; }
 
+        string StatusDescription { get; set; }
+
         string Content { get; set; }
 
         string ContentType { get; set; }
@@ -472,15 +480,17 @@ namespace RestLib
         T Data { get; set; }
     }
 
-    public class RestResponse : IRestResponse
+    public abstract class RestResponseBase
     {
-        public RestResponse()
+        protected RestResponseBase()
         {
             Headers = new NameValueCollection();
         }
 
         public HttpStatusCode StatusCode { get; set; }
 
+        public string StatusDescription { get; set; }
+        
         public string Content { get; set; }
 
         public string ContentType { get; set; }
@@ -488,7 +498,9 @@ namespace RestLib
         public NameValueCollection Headers { get; protected internal set; }
     }
 
-    public class RestResponse<T> : RestResponse, IRestResponse<T>
+    public class RestResponse : RestResponseBase, IRestResponse { }
+
+    public class RestResponse<T> : RestResponseBase, IRestResponse<T>
     {
         public T Data { get; set; }
     }
@@ -564,10 +576,11 @@ namespace RestLib
                 var response = client.SendAsync(request).Result;
 
                 var contentString = response.Content != null ? response.Content.ReadAsStringAsync().Result : null;
-
+                
                 var httpResponse = new HttpResponse
                 {
                     StatusCode = response.StatusCode,
+                    StatusDescription = response.ReasonPhrase,
                     Content = contentString,
                     ContentType = GetContentType(response)
                 };
@@ -639,6 +652,8 @@ namespace RestLib
 
         public HttpStatusCode StatusCode { get; set; }
 
+        public string StatusDescription { get; set; }
+        
         public string Content { get; set; }
 
         public string ContentType { get; set; }
