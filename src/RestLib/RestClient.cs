@@ -107,8 +107,9 @@ namespace RestLib
 
     public class RestRequest : IRestRequest
     {
-        const string QueryStringParameterDelimiter = "&";
-        const string MatrixParameterDelimiter = ";";
+        private const string QueryStringParameterDelimiter = "&";
+        private const string MatrixParameterDelimiter = ";";
+        private bool OmitEmptyParameters = true;
 
         private readonly Uri _endPoint;
         private readonly string _resourceName;
@@ -184,10 +185,8 @@ namespace RestLib
 
         private Uri BuildUri(string resourceIdentifier = null)
         {
-            var builder = new UriBuilder(_endPoint)
-            {
-                Path = PathCombine(_resourceName, resourceIdentifier)
-            };
+            var builder = new UriBuilder(_endPoint);
+            builder.Path = PathCombine(PathCombine(builder.Path, _resourceName), resourceIdentifier);
 
             // Don't include port 80/443 in the Uri.
             if (builder.Uri.IsDefaultPort)
@@ -195,13 +194,17 @@ namespace RestLib
                 builder.Port = -1;
             }
 
-            var queryStringParms = Parameters.Where(p => p.Type == ParameterType.QueryString).ToList();
+            var queryStringParms = Parameters
+                .Where(p => p.Type == ParameterType.QueryString && (!OmitEmptyParameters || !string.IsNullOrWhiteSpace(p.Value)))
+                .ToList();
             if (queryStringParms.Any())
             {
                 builder.Query = EncodeParameters(queryStringParms, QueryStringParameterDelimiter);
             }
 
-            var matrixParams = Parameters.Where(p => p.Type == ParameterType.Matrix).ToList();
+            var matrixParams = Parameters
+                .Where(p => p.Type == ParameterType.Matrix && (!OmitEmptyParameters || !string.IsNullOrWhiteSpace(p.Value)))
+                .ToList();
             if (matrixParams.Any())
             {
                 var encodedParameters = EncodeParameters(matrixParams, MatrixParameterDelimiter);
