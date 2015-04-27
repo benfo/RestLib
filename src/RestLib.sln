@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestLib", "RestLib\RestLib.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestLib.Tests", "RestLib.Tests\RestLib.Tests.csproj", "{00B31003-60D9-4711-9142-B6098C37833F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CombineCs", "CombineCs\CombineCs.csproj", "{CAB21078-BDF7-464A-B724-21C9353A2444}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{00B31003-60D9-4711-9142-B6098C37833F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00B31003-60D9-4711-9142-B6098C37833F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00B31003-60D9-4711-9142-B6098C37833F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CAB21078-BDF7-464A-B724-21C9353A2444}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAB21078-BDF7-464A-B724-21C9353A2444}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAB21078-BDF7-464A-B724-21C9353A2444}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAB21078-BDF7-464A-B724-21C9353A2444}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

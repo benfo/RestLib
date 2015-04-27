@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("RestLib.Tests")]
+[assembly: AssemblyTitle("CombineCs")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Ben Fourie")]
-[assembly: AssemblyProduct("RestLib.Tests")]
+[assembly: AssemblyProduct("CombineCs")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("e387f4e1-63a3-4eed-ba9e-dbf1ff294a3c")]
+[assembly: Guid("9fc8846e-1bea-4e25-aa19-3afa98350bcc")]
 
 // Version information for an assembly consists of the following four values:
 //

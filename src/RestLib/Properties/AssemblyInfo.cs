@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("RestOne")]
+[assembly: AssemblyTitle("RestLib")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("MULTICHOICE")]
-[assembly: AssemblyProduct("RestOne")]
-[assembly: AssemblyCopyright("Copyright © MULTICHOICE 2015")]
+[assembly: AssemblyCompany("Ben Fourie")]
+[assembly: AssemblyProduct("RestLib")]
+[assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
